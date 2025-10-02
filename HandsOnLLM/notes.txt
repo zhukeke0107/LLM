@@ -1,0 +1,3 @@
+notes on package installation
+
+Deep learning changes so fast, some of the packages might not working or installed on local gpu system.
