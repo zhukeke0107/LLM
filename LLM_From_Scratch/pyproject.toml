@@ -8,6 +8,13 @@ dependencies = [
     "torch>=2.4",
     "numpy",
     "tiktoken>=0.14.0",
+    "jupyterlab>=4.0",
+    "matplotlib>=3.7.1",
+    "tensorflow>=2.16.2 ; platform_machine == 'x86_64' and sys_platform == 'darwin'",
+    "tensorflow>=2.18.0 ; platform_machine != 'x86_64' or sys_platform != 'darwin'",
+    "tqdm>=4.66.1",
+    "pandas>=2.2.1",
+    "psutil>=5.9.5",
 ]
 
 # PyTorch wheel selection:
