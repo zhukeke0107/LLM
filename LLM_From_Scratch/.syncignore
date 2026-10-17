@@ -1,0 +1,36 @@
+# Patterns excluded from both push and pull (rsync syntax).
+# A trailing / matches directories only.
+
+# VCS and editor state
+.git/
+.DS_Store
+.idea/
+.vscode/
+*.swp
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.env
+.mypy_cache/
+.pytest_cache/
+.ipynb_checkpoints/
+*.egg-info/
+
+# Machine-local sync config
+.sync.conf
+
+# Large artifacts - keep these on whichever machine produced them.
+# Delete a line to start syncing that kind of file.
+checkpoints/
+runs/
+wandb/
+data/
+*.bin
+*.pt
+*.pth
+*.safetensors
+*.gguf
+*.ckpt

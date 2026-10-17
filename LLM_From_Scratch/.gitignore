@@ -1,0 +1,17 @@
+# Machine-local sync target (host/path differ per machine)
+.sync.conf
+
+.DS_Store
+__pycache__/
+*.py[cod]
+.venv/
+.env
+
+# Training artifacts
+checkpoints/
+runs/
+wandb/
+data/
+*.pt
+*.pth
+*.safetensors
