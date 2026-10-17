@@ -30,6 +30,12 @@ Commands:
   status        Show what a push and a pull would each change (never transfers)
   check         Verify SSH reachability and rsync on both ends
   shell         Open an interactive shell in the remote project directory
+  run <script> [args...]
+                Push, then run \`uv run <script> [args...]\` on $HOST.
+                Everything after the script name is passed through as-is
+                (not parsed as sync.sh options) - e.g.:
+                  scripts/sync.sh run Ch01.py
+                  scripts/sync.sh run train.py --epochs 5
 
 Options:
   -n, --dry-run   List what would change without transferring
@@ -60,17 +66,30 @@ QUIET=0
 CMD="${1-}"
 [ $# -gt 0 ] && shift || true
 
-while [ $# -gt 0 ]; do
-  case "$1" in
-    -n|--dry-run) DRY_RUN=1 ;;
-    --delete)     DELETE=1 ;;
-    -y|--yes)     ASSUME_YES=1 ;;
-    -q|--quiet)   QUIET=1 ;;
-    -h|--help)    usage; exit 0 ;;
-    *)            die "unknown option: $1 (try --help)" ;;
-  esac
-  shift
-done
+RUN_SCRIPT=""
+RUN_ARGS=()
+
+if [ "$CMD" = "run" ]; then
+  # Everything after the script name belongs to the script, not sync.sh -
+  # skip the generic option parser entirely so e.g. `-q`, `--delete` reach
+  # the script unchanged instead of being swallowed as sync.sh flags.
+  [ $# -gt 0 ] || die "usage: scripts/sync.sh run <script.py> [args...]"
+  RUN_SCRIPT="$1"; shift
+  RUN_ARGS=("$@")
+  QUIET=1
+else
+  while [ $# -gt 0 ]; do
+    case "$1" in
+      -n|--dry-run) DRY_RUN=1 ;;
+      --delete)     DELETE=1 ;;
+      -y|--yes)     ASSUME_YES=1 ;;
+      -q|--quiet)   QUIET=1 ;;
+      -h|--help)    usage; exit 0 ;;
+      *)            die "unknown option: $1 (try --help)" ;;
+    esac
+    shift
+  done
+fi
 
 case "$CMD" in
   -h|--help|'') usage; exit 0 ;;
@@ -151,6 +170,15 @@ case "$CMD" in
   shell)
     ssh_run "mkdir -p '$REMOTE_PATH'"
     exec ssh -t "$HOST" "cd '$REMOTE_PATH' && exec \${SHELL:-/bin/bash} -l"
+    ;;
+
+  run)
+    do_push
+    printf '==> run   uv run %s %s   on %s\n' "$RUN_SCRIPT" "${RUN_ARGS[*]-}" "$HOST"
+    # The ${arr[@]+...} guard avoids "unbound variable" on macOS's default
+    # bash (3.2) when RUN_ARGS is empty, even under `set -u`.
+    remote_cmd=$(printf '%q ' "$RUN_SCRIPT" "${RUN_ARGS[@]+"${RUN_ARGS[@]}"}")
+    exec ssh -t "$HOST" "export PATH=\"\$HOME/.local/bin:\$PATH\"; cd '$REMOTE_PATH' && uv run $remote_cmd"
     ;;
 
   *) die "unknown command: $CMD (try --help)" ;;
